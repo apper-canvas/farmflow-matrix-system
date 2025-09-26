@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import FormField from "@/components/molecules/FormField";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/atoms/Card";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import FormField from "@/components/molecules/FormField";
+import Button from "@/components/atoms/Button";
 
 // Initialize Apper SDK safely
 let apperClient = null;
@@ -107,26 +107,24 @@ const handleGenerateWeather = async () => {
     try {
       const result = await apperClient.functions.invoke(import.meta.env.VITE_WEATHER_AI_GENERATION, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ location: formData.location })
+        body: JSON.stringify({
+          location: formData.location,
+          farmType: formData.soilType || 'general'
+        })
       });
 
-      const response = await result.json();
-      
-      if (response.success) {
+      if (result?.success && result?.data) {
         setFormData(prev => ({
           ...prev,
-          weatherSummary: response.data.weatherSummary
+          weatherSummary: result.data.weatherSummary || result.data.summary || ''
         }));
-        toast.success('Weather summary generated successfully!');
+        toast.success('Weather summary generated successfully');
       } else {
-        toast.error(response.error || 'Failed to generate weather summary');
+        toast.error(result?.error || 'Failed to generate weather summary');
       }
     } catch (error) {
-      toast.error('Failed to generate weather summary');
-      console.error('Weather generation error:', error);
+      console.error('Error generating weather:', error);
+      toast.error('Network error - please try again');
     } finally {
       setIsGeneratingWeather(false);
     }
